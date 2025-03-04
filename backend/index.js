@@ -1,3 +1,4 @@
+const cors = require("cors");
 const express = require("express");
 const passport = require("../backend/passportConfig");
 const authRoutes = require("./routes/authRoutes");
@@ -7,7 +8,7 @@ const profileRoutes = require("./routes/profileRoutes");
 
 require("dotenv").config();
 const app = express();
-
+app.use(cors());
 app.use(express.json());
 app.use(passport.initialize());
 
