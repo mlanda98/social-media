@@ -139,4 +139,55 @@ router.get("/", async (req, res) => {
     res.status(500).json({error: error.message});
   }
 })
+
+router.get("/feed", authenticateJWT, async (req, res) => {
+  try{
+    const userId = req.user.userId;
+
+    const following = await prisma.follow.findMany({
+      where: {followerId: userId, status: "accepted"},
+      select: {followerId: true},
+    })
+
+    const followerIds = following.map((f) => f.followerId);
+
+    followerIds.push(userId);
+
+    const posts = await prisma.post.findMany({
+      where: {authorId: {in: followerIds}},
+      include: {
+        author: {
+          select: {id: true, username: true},
+        },
+        likes: {
+          select: {id: true, userId: true},
+        },
+        comments: {
+          include: {
+            user: {select: {id: true, username: true}},
+          },
+        },
+      },
+      orderBy: {createdAt: "desc"},
+    })
+
+    const formattedPosts = posts.map((post) => ({
+      id : post.id,
+      content: post.content,
+      author: post.author.username,
+      likesCount: post.likes.length,
+      comments: post.comments.map((comment) => ({
+        id: comment.id,
+        content: comment.content,
+        author: comment.user.username,
+      })),
+      createdAt: post.createdAt,
+    }))
+    
+    res.json(formattedPosts);
+  }
+  catch (error){
+    res.status(500).json({error: error.message})
+  }
+})
 module.exports = router;
