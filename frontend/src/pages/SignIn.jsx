@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,8 +19,9 @@ const SignIn = () => {
     if (response.ok){
       localStorage.setItem("token", data.token)
       alert("Login successful!");
+      navigate("/dashboard")
     } else {
-      alert(data.message);
+      alert(data.error);
     }
   }
 

@@ -5,14 +5,10 @@ const Register = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
 
     const response = await fetch("http://localhost:8000/auth/register", {
       method: "POST",
@@ -25,7 +21,7 @@ const Register = () => {
       alert("Registration successful! Please log in.");
       navigate("/login");
     } else {
-      setError(data.message || "Registration failed. Please try again");
+      alert(data.error);
     }
   };
 
@@ -54,11 +50,8 @@ const Register = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit" disabled={loading}>
-          {loading ? "Registering..." : "Register"}
-        </button>
+        <button type="submit">Register</button>
       </form>
-      {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
   );
 };
