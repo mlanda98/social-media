@@ -30,10 +30,10 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, username, password } = req.body;
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { username, email },
     });
 
     if (!user) {
@@ -49,7 +49,7 @@ router.post("/login", async (req, res) => {
       expiresIn: "1h",
     });
 
-    res.status(200).json({ message: "Login successful", token });
+    res.status(200).json({ message: "Login successful", token, username: user.username });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

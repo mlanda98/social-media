@@ -3,7 +3,7 @@ const prisma = require("../prismaClient");
 const router = express.Router();
 
 const jwt = require("jsonwebtoken");
-const { authorize } = require("passport");
+const { authorize, use } = require("passport");
 
 const authenticateJWT = (req, res, next) => {
   const token = req.header("Authorization");
@@ -119,7 +119,7 @@ router.get("/", async (req, res) => {
       },
     });
 
-    console.log("Posts data:", posts)
+    console.log("Posts data:", posts);
     const formattedPosts = posts.map((post) => ({
       id: post.id,
       content: post.content,
@@ -138,21 +138,17 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/feed", authenticateJWT, async (req, res) => {
+router.get("/user/:username", authenticateJWT, async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const { username } = req.params;
 
-    const following = await prisma.follow.findMany({
-      where: { followerId: userId, status: "accepted" },
-      select: { followingId: true },
+    const user = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true, username: true, email: true },
     });
 
-    const followerIds = following.map((f) => f.followingId);
-
-    followerIds.push(userId);
-
     const posts = await prisma.post.findMany({
-      where: { authorId: { in: followerIds } },
+      where: { authorId: user.id },
       include: {
         author: {
           select: { id: true, username: true },

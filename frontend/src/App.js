@@ -4,6 +4,7 @@ import SignIn from "./pages/SignIn";
 import Register from "./pages/Register"
 import PrivateRoute from "./PrivateRoute";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         <Route path="/login" element={<SignIn />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} /> 
+        <Route path="/profile/:username" element={<PrivateRoute><Profile /></PrivateRoute>} />
       </Routes>
     </Router>
   );

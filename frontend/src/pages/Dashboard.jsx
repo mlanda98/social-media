@@ -6,7 +6,8 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [newPostContent, setNewPostContent] = useState("");
-
+  const username = localStorage.getItem("username")
+  
   useEffect(() => {
     const fetchPosts = async () => {
       const token = localStorage.getItem("token");
@@ -28,6 +29,7 @@ const Dashboard = () => {
       }
       const data = await response.json();
       setPosts(data);
+      console.log("post data fetched", data)
 
     };
     fetchPosts();
@@ -55,15 +57,18 @@ const Dashboard = () => {
   };
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("username");
     navigate("/login");
   };
+
+  
 
   return (
     <div>
       <h2>Welcome to Dashboard</h2>
       <div>
         <h3>Dashboard Navigation</h3>
-        <Link to="/profile">Go to Profile</Link>
+        <Link to={`/profile/${username}`}>Go to Profile</Link>
         <Link to="/follow">People to Follow</Link>
         <Link to="/pending-requests">Pending Follow Request</Link>
         <Link to="/unfollow">Unfollow People</Link>

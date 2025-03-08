@@ -1,5 +1,6 @@
 const express = require("express");
 const prisma = require("../prismaClient");
+const crypto = require("crypto");
 
 const router = express.Router();
 
@@ -22,7 +23,7 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
-router.get("users/:username", async (req, res) => {
+router.get("/:username", async (req, res) => {
   try {
     const { username } = req.params;
     const user = await prisma.user.findUnique({
@@ -33,7 +34,7 @@ router.get("users/:username", async (req, res) => {
           include: {
             likes: true,
             comments: {
-              include: { user: { select: { username } } },
+              include: { author: { select: { username: true } } },
             },
           },
         },
@@ -46,7 +47,7 @@ router.get("users/:username", async (req, res) => {
       username: user.username,
       avatar:
         user.avatar ||
-        `https://wwww.gravatar.com/avatar/${md5(user.email)}?d=identicon`,
+        `https://www.gravatar.com/avatar/${crypto.createHash("md5").update(user.email.trim().toLowerCase()).digest("hex")}?d=identicon`,
       posts: user.posts.map((post) => ({
         id: post.id,
         content: post.content,
@@ -63,7 +64,7 @@ router.get("users/:username", async (req, res) => {
   }
 });
 
-router.patch("/users/profile", authenticateJWT, async (req, res) => {
+router.patch("/profile", authenticateJWT, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { username, avatar } = req.body;
@@ -80,5 +81,6 @@ router.patch("/users/profile", authenticateJWT, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 module.exports = router;
