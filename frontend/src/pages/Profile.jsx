@@ -35,7 +35,7 @@ const Profile = () => {
       setUserData(data);
 
       const postsResponse = await fetch(
-        `http://localhost:8000/user/${username}`,
+        `http://localhost:8000/post/user/${username}`,
         {
           method: "GET",
           headers: {
