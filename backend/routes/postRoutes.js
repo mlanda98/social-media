@@ -144,7 +144,19 @@ router.get("/user/:username", authenticateJWT, async (req, res) => {
 
     const user = await prisma.user.findUnique({
       where: { username },
-      select: { id: true, username: true, email: true },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        avatar: true,
+        posts: true,
+        _count: {
+          select: {
+            followers: true,
+            following: true,
+          },
+        },
+      },
     });
 
     const posts = await prisma.post.findMany({
@@ -173,12 +185,19 @@ router.get("/user/:username", authenticateJWT, async (req, res) => {
       comments: post.comments.map((comment) => ({
         id: comment.id,
         content: comment.content,
-        author: comment.user.username,
+        author: comment.author.username,
       })),
       createdAt: post.createdAt,
     }));
 
-    res.json(formattedPosts);
+    res.json({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      followersCount: user._count.followers,
+      followingCount: user._count.following,
+      posts: formattedPosts,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
     console.error(error);

@@ -6,6 +6,7 @@ const router = express.Router();
 
 const jwt = require("jsonwebtoken");
 const { use } = require("passport");
+const { emit } = require("process");
 
 const authenticateJWT = (req, res, next) => {
   const token = req.header("Authorization");
@@ -38,6 +39,8 @@ router.get("/:username", async (req, res) => {
             },
           },
         },
+        followers: true,
+        following: true,
       },
     });
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -45,16 +48,20 @@ router.get("/:username", async (req, res) => {
     res.json({
       id: user.id,
       username: user.username,
+      email: user.email,
       avatar:
         user.avatar ||
         `https://www.gravatar.com/avatar/${crypto.createHash("md5").update(user.email.trim().toLowerCase()).digest("hex")}?d=identicon`,
+        followersCount: user.followers.length,
+        followingCount: user.following.length,
       posts: user.posts.map((post) => ({
         id: post.id,
         content: post.content,
-        likesCount: post.comments.map((comment) => ({
+        likesCount: post.likes.length,
+        comments: post.comments.map((comment) => ({
           id: comment.id,
           content: comment.content,
-          author: comment.user.username,
+          author: comment.author.username,
         })),
         createdAt: post.createdAt,
       })),

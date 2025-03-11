@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const Profile = () => {
@@ -32,6 +32,7 @@ const Profile = () => {
       }
 
       const data = await response.json();
+      console.log("user data", data)
       setUserData(data);
 
       const postsResponse = await fetch(
@@ -51,7 +52,7 @@ const Profile = () => {
       }
 
       const postsData = await postsResponse.json();
-      setPosts(postsData);
+      setPosts(postsData.posts || []);
     };
     fetchUserProfile();
   }, [username, navigate]);
@@ -70,7 +71,7 @@ const Profile = () => {
         <div className="profile-info">
           <h3>{userData.username}</h3>
           <p>Email: {userData.email}</p>
-          <p>Followers: {userData.followerCount}</p>
+          <p>Followers: {userData.followersCount}</p>
           <p>Following: {userData.followingCount}</p>
         </div>
       </div>
