@@ -75,7 +75,7 @@ router.delete("/follow/reject/:followId", authenticateJWT, async (req, res) => {
 
 router.delete("/unfollow/:userId", authenticateJWT, async (req, res) => {
   try {
-    const followerId = req.user.id;
+    const followerId = req.user.userId;
     const followingId = req.params.userId;
 
     await prisma.follow.deleteMany({
@@ -97,7 +97,7 @@ router.get("/followers", authenticateJWT, async (req, res) => {
   try {
     const followers = await prisma.follow.findMany({
       where: { followingId: req.user.id, status: "accepted" },
-      include: { follower: { select: { id, username, email } } },
+      include: { follower: { select: { id: true, username: true, email: true } } },
     });
 
     res.json(followers);
@@ -109,8 +109,8 @@ router.get("/followers", authenticateJWT, async (req, res) => {
 router.get("/following", authenticateJWT, async (req, res) => {
   try {
     const following = await prisma.follow.findMany({
-      where: { followerId: req.user.id, status: "accepted" },
-      include: { following: { select: { id, username, email } } },
+      where: { followerId: req.user.userId, status: "accepted" },
+      include: { following: { select: { id: true, username: true, email: true } } },
     });
 
     res.json(following);
