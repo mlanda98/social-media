@@ -69,9 +69,7 @@ const Dashboard = () => {
       <div>
         <h3>Dashboard Navigation</h3>
         <Link to={`/profile/${username}`}>Go to Profile</Link>
-        <Link to="/follow">People to Follow</Link>
-        <Link to="/pending-requests">Pending Follow Request</Link>
-        <Link to="/unfollow">Unfollow People</Link>
+        <Link to={"/follow"}>Following Page</Link>
       </div>
       <div>
         <h3>Create Post</h3>

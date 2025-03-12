@@ -5,6 +5,7 @@ import Register from "./pages/Register"
 import PrivateRoute from "./PrivateRoute";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import Follow from "./pages/Follow";
 
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} /> 
         <Route path="/profile/:username" element={<PrivateRoute><Profile /></PrivateRoute>} />
+        <Route path="/follow" element={<PrivateRoute><Follow /></PrivateRoute>}/>
       </Routes>
     </Router>
   );
