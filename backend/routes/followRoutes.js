@@ -119,4 +119,28 @@ router.get("/following", authenticateJWT, async (req, res) => {
   }
 });
 
+router.get("/suggested-user", authenticateJWT, async (req, res) => {
+  try{
+    const userId = req.user.userId;
+
+    const suggestedUsers = await prisma.user.findMany({
+      where: {
+        AND: [
+          {id: {not: userId}},
+          {
+            NOT: {
+              followerBy: {
+                some: {followerId: userId, status: "accepted"},
+              }
+            }
+          }
+        ]
+      },
+      select: {id: true, username: true, email: true, avatar: true},
+    })
+    res.json(suggestedUsers);
+  } catch (error){
+    res.status(500)({error: error.message});
+  }
+})
 module.exports = router;
