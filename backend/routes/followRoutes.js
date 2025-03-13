@@ -13,10 +13,7 @@ const authenticateJWT = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(
-      token.split(" ")[1],
-      process.env.JWT_SECRET
-    );
+    const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {
@@ -79,12 +76,12 @@ router.delete("/unfollow/:userId", authenticateJWT, async (req, res) => {
     const followingId = req.params.userId;
 
     await prisma.follow.deleteMany({
-      where: { 
+      where: {
         OR: [
-          {followerId, followingId },
-          {followerId: followingId, followingId: followerId}
+          { followerId, followingId },
+          { followerId: followingId, followingId: followerId },
         ],
-      }
+      },
     });
 
     res.json({ message: "Unfollowed user" });
@@ -97,7 +94,9 @@ router.get("/followers", authenticateJWT, async (req, res) => {
   try {
     const followers = await prisma.follow.findMany({
       where: { followingId: req.user.id, status: "accepted" },
-      include: { follower: { select: { id: true, username: true, email: true } } },
+      include: {
+        follower: { select: { id: true, username: true, email: true } },
+      },
     });
 
     res.json(followers);
@@ -110,7 +109,9 @@ router.get("/following", authenticateJWT, async (req, res) => {
   try {
     const following = await prisma.follow.findMany({
       where: { followerId: req.user.userId, status: "accepted" },
-      include: { following: { select: { id: true, username: true, email: true } } },
+      include: {
+        following: { select: { id: true, username: true, email: true } },
+      },
     });
 
     res.json(following);
@@ -120,27 +121,26 @@ router.get("/following", authenticateJWT, async (req, res) => {
 });
 
 router.get("/suggested-user", authenticateJWT, async (req, res) => {
-  try{
+  try {
     const userId = req.user.userId;
 
     const suggestedUsers = await prisma.user.findMany({
       where: {
-        AND: [
-          {id: {not: userId}},
-          {
-            NOT: {
-              followerBy: {
-                some: {followerId: userId, status: "accepted"},
-              }
-            }
-          }
-        ]
+        id: { not: userId },
+        NOT: {
+          followers: {
+            some: {
+              followerId: userId,
+              status: "accepted",
+            },
+          },
+        },
       },
-      select: {id: true, username: true, email: true, avatar: true},
-    })
+      select: { id: true, username: true, email: true, avatar: true },
+    });
     res.json(suggestedUsers);
-  } catch (error){
-    res.status(500)({error: error.message});
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-})
+});
 module.exports = router;

@@ -7,7 +7,7 @@ const Follow = () => {
   useEffect(() => {
     const fetchSuggestedUsers = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/suggested-users", {
+        const res = await fetch("http://localhost:8000/follow/suggested-user", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -18,7 +18,9 @@ const Follow = () => {
         console.error("Error:", error);
       }
     };
+    if (token){
     fetchSuggestedUsers();
+    }
   }, [token]);
 
   const followUser = async (userId) => {
