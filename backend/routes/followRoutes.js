@@ -150,6 +150,7 @@ router.get("/followers", authenticateJWT, async (req, res) => {
   try {
     const followers = await prisma.follow.findMany({
       where: { followingId: req.user.userId, status: "accepted" },
+      distinct: ["followerId"],
       include: {
         follower: { select: { id: true, username: true, email: true } },
       },
@@ -200,18 +201,20 @@ router.get("/suggested-user", authenticateJWT, async (req, res) => {
   try {
     const userId = req.user.userId;
 
+    const followedUsers = await prisma.follow.findMany({
+      where: {
+        followerId: userId,
+        status: "accepted",
+      },
+      select: {followingId: true},
+    })
+
+    const followedUserIds = followedUsers.map((follow) => follow.followingId);
+
     const suggestedUsers = await prisma.user.findMany({
       where: {
-        id: { not: userId },
-        NOT: {
-          followers: {
-            some: {
-              followerId: userId,
-              status: "accepted",
-            },
-          },
+        id: { notIn: [...followedUserIds, userId] },
         },
-      },
       select: { id: true, username: true, email: true, avatar: true },
     });
     res.json(suggestedUsers);

@@ -158,6 +158,7 @@ const Follow = () => {
     } catch (error) {
       console.error("Error:", error);
     }
+  
   };
 
 
