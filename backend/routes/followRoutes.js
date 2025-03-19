@@ -4,6 +4,7 @@ const prisma = require("../prismaClient");
 const router = express.Router();
 
 const jwt = require("jsonwebtoken");
+const { use } = require("passport");
 
 const authenticateJWT = (req, res, next) => {
   const token = req.header("Authorization");
@@ -21,7 +22,7 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
-router.post("/follow/:userId", authenticateJWT, async (req, res) => {
+router.post("/:userId", authenticateJWT, async (req, res) => {
   try {
     const followerId = req.user.userId;
     const followingId = req.params.userId;
@@ -30,6 +31,15 @@ router.post("/follow/:userId", authenticateJWT, async (req, res) => {
       return res.status(400).json({ message: "You cannot follow yourself" });
     }
 
+    const existing = await prisma.follow.findFirst({
+      where: { followerId, followingId },
+    });
+
+    if (existing) {
+      if (existing.status === "pending") {
+        return res.status(400).json({ message: "Request already sent" });
+      }
+    }
     const follow = await prisma.follow.create({
       data: {
         followerId,
@@ -43,24 +53,47 @@ router.post("/follow/:userId", authenticateJWT, async (req, res) => {
   }
 });
 
-router.post("/follow/accept/:followId", authenticateJWT, async (req, res) => {
+router.post("/accept/:followId", authenticateJWT, async (req, res) => {
   try {
     const followId = req.params.followId;
+    const userId = req.user.userId;
 
-    const follow = await prisma.follow.update({
+    const follow = await prisma.follow.findUnique({
+      where: { id: followId },
+    });
+
+    if (follow.followingId !== userId) {
+      return res.status(403).json({ message: "Unauthorized action" });
+    }
+
+    const updatedFollow = await prisma.follow.update({
       where: { id: followId },
       data: { status: "accepted" },
     });
-
-    res.json({ message: "Follow request accepted", follow });
+    res.json({ message: "Follow request accepted", updatedFollow });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-router.delete("/follow/reject/:followId", authenticateJWT, async (req, res) => {
+router.delete("/reject/:followId", authenticateJWT, async (req, res) => {
   try {
+    console.log("Authenticated user", req.user);
     const followId = req.params.followId;
+    const userId = req.user.userId;
+
+    const follow = await prisma.follow.findUnique({
+      where: { id: followId },
+    });
+
+    if (!follow) {
+      return res.status(404).json({ message: "Follow request not found" });
+    }
+
+    console.log("Following request found", follow);
+    if (follow.followingId !== userId) {
+      return res.status(403).json({ message: "Unauthorized action" });
+    }
 
     await prisma.follow.delete({ where: { id: followId } });
 
@@ -75,13 +108,17 @@ router.delete("/unfollow/:userId", authenticateJWT, async (req, res) => {
     const followerId = req.user.userId;
     const followingId = req.params.userId;
 
-    await prisma.follow.deleteMany({
-      where: {
-        OR: [
-          { followerId, followingId },
-          { followerId: followingId, followingId: followerId },
-        ],
-      },
+    const follow = await prisma.follow.findFirst({
+      where: { followerId, followingId },
+    });
+
+    if (!follow) {
+      return res
+        .status(404)
+        .json({ message: "You are not following the user" });
+    }
+    await prisma.follow.delete({
+      where: { id: follow.id },
     });
 
     res.json({ message: "Unfollowed user" });
@@ -90,15 +127,36 @@ router.delete("/unfollow/:userId", authenticateJWT, async (req, res) => {
   }
 });
 
+router.get("/count", authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const followersCount = await prisma.follow.count({
+      where: { followingId: userId, status: "accepted" },
+    });
+
+    const followingCount = await prisma.follow.count({
+      where: { followerId: userId, status: "accepted" },
+    });
+
+    res.json({ followers: followersCount, following: followingCount });
+  } catch (error) {
+    console.error("Error fetching following counts:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 router.get("/followers", authenticateJWT, async (req, res) => {
+  console.log("GET /followers route hit");
   try {
     const followers = await prisma.follow.findMany({
-      where: { followingId: req.user.id, status: "accepted" },
+      where: { followingId: req.user.userId, status: "accepted" },
       include: {
         follower: { select: { id: true, username: true, email: true } },
       },
     });
 
+    console.log("followers from db", followers);
+    console.log("followers count:", followers.length);
     res.json(followers);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -120,6 +178,24 @@ router.get("/following", authenticateJWT, async (req, res) => {
   }
 });
 
+router.get("/pending", authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const pendingRequests = await prisma.follow.findMany({
+      where: {
+        followingId: userId,
+        status: "pending",
+      },
+      include: {
+        follower: true,
+      },
+    });
+    res.json(pendingRequests);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 router.get("/suggested-user", authenticateJWT, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -143,4 +219,5 @@ router.get("/suggested-user", authenticateJWT, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 module.exports = router;
