@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import {  useEffect, useState} from "react";
 
 const Follow = () => {
   const [users, setUsers] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [followingCount, setFollowingCount] = useState(0);
   const [followerCount, setFollowerCount] = useState(0);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
   const token = localStorage.getItem("token");
 
   const fetchFollowCount = async () => {
@@ -14,8 +16,7 @@ const Follow = () => {
       });
       if (!res.ok) throw new Error("Failed to fetch follow count");
       const data = await res.json();
-      console.log("Followers count from API", data.followers)
-      console.log("Following count from api", data.following)
+
       setFollowerCount(data.followers);
       setFollowingCount(data.following);
     } catch (error) {
@@ -63,7 +64,9 @@ const Follow = () => {
   useEffect(() => {
     if (token) {
       fetchFollowCount();
-    }
+      fetchFollowers();
+      fetchFollowing(); 
+        }
   }, [token]);
 
   const followUser = async (userId) => {
@@ -137,33 +140,66 @@ const Follow = () => {
       console.error("Error:", error);
     }
   };
+
+  const fetchFollowers = async () => {
+    try{
+      const res = await fetch("http://localhost:8000/follow/followers", {
+        headers: {Authorization: `Bearer ${localStorage.getItem("token")}`},
+      })
+      if (res.ok){
+        const data = await res.json();
+        setFollowers(data);
+      }
+    } catch (error){
+      console.error("Error fetching followers:", error);
+    }
+  }
+
+  const fetchFollowing = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/follow/following", {
+        headers: {Authorization: `Bearer ${localStorage.getItem("token")}`}
+      });
+      if (res.ok){
+        const data = await res.json();
+        setFollowing(data);
+      }
+    } catch (error){
+        console.error("Error fetching following:", error);
+    }
+  }
   const unfollowUser = async (userId) => {
     try {
-      const res = await fetch(`http://localhost:8000/unfollow/${userId}`, {
+      const res = await fetch(`http://localhost:8000/follow/unfollow/${userId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
       });
 
       if (!res.ok) throw new Error("Failed to unfollow user");
 
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? { ...user, followStatus: null } : user
-        )
+      setFollowing((prev) =>
+        prev.filter((user) =>
+          user.following.id !== userId)
       );
+      fetchFollowing();
       fetchFollowCount();
+      fetchFollowers();
     } catch (error) {
       console.error("Error:", error);
     }
   
   };
 
+  
 
   return (
     <div>
+      <div>
+        <span>Followers: {followerCount}</span>
+        <span>Following: {followingCount}</span>
+      </div>
       <h2>People to Follow</h2>
       {users.length === 0 ? (
         <p>No suggestions available</p>
@@ -194,7 +230,7 @@ const Follow = () => {
             <li key={request.id}>
               <img
                 src={request.follower.avatar}
-                alt="request.follower.username"
+                alt={request.follower.username}
                 width="50"
               />
               <span>{request.follower.username}</span>
@@ -204,9 +240,26 @@ const Follow = () => {
           ))}
         </ul>
       )}
+
       <div>
-        <span>Followers: {followerCount}</span>
-        <span>Following: {followingCount}</span>
+        <h2>Followers</h2>
+        <ul>
+          {followers.map((user) => (
+            <li key={user.follower.id}>
+              {user.follower.username} 
+            </li>
+          )) }
+        </ul>
+
+        <h2>Following</h2>
+        <ul>
+          {following.map((user) => (
+            <li key={user.following.id}>
+              {user.following.username}
+              <button onClick={() => unfollowUser(user.following.id)}>Unfollow</button>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

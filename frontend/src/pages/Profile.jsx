@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { data, useNavigate, useParams } from "react-router-dom";
 
 const Profile = () => {
   const { username } = useParams();
-  console.log(username);
   const [userData, setUserData] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followerCount, setFollowerCount] = useState(0);
+  const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const token = localStorage.getItem("token");
       if (!token) {
         navigate("/login");
         return;
@@ -32,7 +33,7 @@ const Profile = () => {
       }
 
       const data = await response.json();
-      console.log("user data", data)
+      console.log("fetched user data", data);
       setUserData(data);
 
       const postsResponse = await fetch(
@@ -54,8 +55,23 @@ const Profile = () => {
       const postsData = await postsResponse.json();
       setPosts(postsData.posts || []);
     };
+    const fetchFollowCount = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/follow/count", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        
+        setFollowerCount(data.followers);
+        setFollowingCount(data.following);
+      } catch (error) {
+        console.error("Error fetching follow amount", error);
+      }
+    };
+
     fetchUserProfile();
-  }, [username, navigate]);
+    fetchFollowCount();
+  }, [username, navigate, token]);
 
   if (!userData) return <div>Loading...</div>;
 
@@ -71,8 +87,8 @@ const Profile = () => {
         <div className="profile-info">
           <h3>{userData.username}</h3>
           <p>Email: {userData.email}</p>
-          <p>Followers: {userData.followersCount}</p>
-          <p>Following: {userData.followingCount}</p>
+          <p>Followers: {followerCount}</p>
+          <p>Following: {followingCount}</p>
         </div>
       </div>
       <div>
