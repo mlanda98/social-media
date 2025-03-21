@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate} from "react-router-dom";
+import { useNavigate, useResolvedPath} from "react-router-dom";
 import { Link } from "react-router-dom";
+import { post } from "../../../backend/prismaClient";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [newPostContent, setNewPostContent] = useState("");
+  const [commentInputs, setCommentInputs] = useState({})
   const username = localStorage.getItem("username")
   
   useEffect(() => {
@@ -29,7 +31,6 @@ const Dashboard = () => {
       }
       const data = await response.json();
       setPosts(data);
-      console.log("post data fetched", data)
 
     };
     fetchPosts();
@@ -55,6 +56,30 @@ const Dashboard = () => {
       alert("Failed to create post");
     }
   };
+
+  const handleLike = async (postId) => {
+    const token = localStorage.getItem("token");
+    const response = await fetch(`http://localhost:8000/post/like/${postId}`, {
+      method: "POST", 
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      }
+    })
+
+    if (response.ok){
+      setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+      post.id === postId ? {...post, likesCount: post.likesCount + 1} : post)
+      )
+    } else {
+      alert("Failed to like post")
+    }
+  }
+
+  const handleCommentChange = (postId, value) => {
+    setCommentInputs({...commentInputs, [postId]: value})
+  }
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");

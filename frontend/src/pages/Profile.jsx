@@ -33,7 +33,6 @@ const Profile = () => {
       }
 
       const data = await response.json();
-      console.log("fetched user data", data);
       setUserData(data);
 
       const postsResponse = await fetch(
@@ -61,7 +60,7 @@ const Profile = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        
+
         setFollowerCount(data.followers);
         setFollowingCount(data.following);
       } catch (error) {
