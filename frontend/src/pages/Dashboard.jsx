@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useResolvedPath} from "react-router-dom";
 import { Link } from "react-router-dom";
-import { post } from "../../../backend/prismaClient";
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -80,14 +80,45 @@ const Dashboard = () => {
   const handleCommentChange = (postId, value) => {
     setCommentInputs({...commentInputs, [postId]: value})
   }
+
+  const handleCommentSubmit = async (e, postId) => {
+    e.preventDefault();
+    const content = commentInputs[postId];
+
+    if (!content) return;
+
+    const token = localStorage.getItem("token");
+    const response = await fetch(`http://localhost:8000/post/comment/${postId}`,{
+      method: "POST", 
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({content}),
+    })
+    if (response.ok){
+      const newComment = await response.json();
+      setPosts((prevPosts) =>
+      prevPosts.map((post) => 
+      post.id === postId
+      ? {
+        ...post,
+        comments: [...post.comments, newComment.comment],
+      }
+      : post
+      ))
+      setCommentInputs({...commentInputs, [postId]: ""})
+    } else{
+      alert("Failed to add comment");
+    }
+  }
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     navigate("/login");
   };
-
   
-
   return (
     <div>
       <h2>Welcome to Dashboard</h2>
