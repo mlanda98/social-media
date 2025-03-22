@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useResolvedPath} from "react-router-dom";
+import { useNavigate, useResolvedPath } from "react-router-dom";
 import { Link } from "react-router-dom";
-
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [newPostContent, setNewPostContent] = useState("");
-  const [commentInputs, setCommentInputs] = useState({})
-  const username = localStorage.getItem("username")
-  
+  const [commentInputs, setCommentInputs] = useState({});
+  const username = localStorage.getItem("username");
+
   useEffect(() => {
     const fetchPosts = async () => {
       const token = localStorage.getItem("token");
@@ -31,7 +30,6 @@ const Dashboard = () => {
       }
       const data = await response.json();
       setPosts(data);
-
     };
     fetchPosts();
   }, [navigate]);
@@ -60,26 +58,29 @@ const Dashboard = () => {
   const handleLike = async (postId) => {
     const token = localStorage.getItem("token");
     const response = await fetch(`http://localhost:8000/post/like/${postId}`, {
-      method: "POST", 
+      method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
-      }
-    })
+      },
+    });
 
-    if (response.ok){
+    if (response.ok) {
       setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-      post.id === postId ? {...post, likesCount: post.likesCount + 1} : post)
-      )
+        prevPosts.map((post) =>
+          post.id === postId
+            ? { ...post, likesCount: post.likesCount + 1 }
+            : post
+        )
+      );
     } else {
-      alert("Failed to like post")
+      alert("Failed to like post");
     }
-  }
+  };
 
   const handleCommentChange = (postId, value) => {
-    setCommentInputs({...commentInputs, [postId]: value})
-  }
+    setCommentInputs({ ...commentInputs, [postId]: value });
+  };
 
   const handleCommentSubmit = async (e, postId) => {
     e.preventDefault();
@@ -88,37 +89,41 @@ const Dashboard = () => {
     if (!content) return;
 
     const token = localStorage.getItem("token");
-    const response = await fetch(`http://localhost:8000/post/comment/${postId}`,{
-      method: "POST", 
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({content}),
-    })
-    if (response.ok){
+    const response = await fetch(
+      `http://localhost:8000/post/comment/${postId}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content }),
+      }
+    );
+    if (response.ok) {
       const newComment = await response.json();
       setPosts((prevPosts) =>
-      prevPosts.map((post) => 
-      post.id === postId
-      ? {
-        ...post,
-        comments: [...post.comments, newComment.comment],
-      }
-      : post
-      ))
-      setCommentInputs({...commentInputs, [postId]: ""})
-    } else{
+        prevPosts.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                comments: [...post.comments, newComment.comment],
+              }
+            : post
+        )
+      );
+      setCommentInputs({ ...commentInputs, [postId]: "" });
+    } else {
       alert("Failed to add comment");
     }
-  }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("username");
     navigate("/login");
   };
-  
+
   return (
     <div>
       <h2>Welcome to Dashboard</h2>
@@ -174,7 +179,7 @@ const Dashboard = () => {
       </div>
       <button onClick={handleLogout}>Logout</button>
     </div>
-  )
+  );
 };
 
 export default Dashboard;
