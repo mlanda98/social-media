@@ -41,7 +41,6 @@ router.post("/create", authenticateJWT, async (req, res) => {
 });
 
 router.post("/like/:postId", authenticateJWT, async (req, res) => {
-  console.log("Authenticate user:", req.user);
   const postId = req.params.postId;
   const userId = req.user.userId;
 
@@ -68,7 +67,17 @@ router.post("/like/:postId", authenticateJWT, async (req, res) => {
         userId,
       },
     });
-    res.status(201).json({ message: "Post liked", like });
+    
+    const updatedPost = await prisma.post.findUnique({
+      where: {id: postId},
+      include: {likes: true},
+    })
+    res.status(201).json({ message: "Post liked", post: {
+      id: updatedPost.id,
+      content: updatedPost.content,
+      likesCount: updatedPost.likes.length,
+    }
+     });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

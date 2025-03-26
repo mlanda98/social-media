@@ -71,7 +71,7 @@ const Dashboard = () => {
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
-            ? { ...post, likesCount: (post.likesCount || 0) + 1, likedByUser: true}
+            ? { ...post, likesCount: data.post.likesCount}
             : post
         )
       );
@@ -162,7 +162,7 @@ const Dashboard = () => {
               <p>{post.content}</p>
               <small>By {post.author || "Unknown"}</small>
               <div>
-                <strong>{post.likes?.length ?? 0} Likes</strong>
+                <strong>{post.likesCount} Likes</strong>
                 <button key={post.id} onClick={() => handleLike(post.id)} disabled={post.likedByUser}>Like</button>
               </div>
 
@@ -181,7 +181,7 @@ const Dashboard = () => {
                   </div>
                 ))}
 
-                <form onSubmit={(e) => handleCommentChange(e, post.id)}>
+                <form onSubmit={(e) => handleCommentSubmit(e, post.id)}>
                   <input
                   type="text"
                   value={commentInputs[post.id] || ""}
