@@ -63,17 +63,24 @@ const Dashboard = () => {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({postId})
     });
 
+    const data  = await response.json();
     if (response.ok) {
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
-            ? { ...post, likesCount: post.likesCount + 1 }
+            ? { ...post, likesCount: (post.likesCount || 0) + 1, likedByUser: true}
             : post
         )
       );
     } else {
+      if (data.message === "You already liked this post"){
+        alert("You've already liked this post!")
+      }
+      console.error("Failed to like post:", data);
+      
       alert("Failed to like post");
     }
   };
@@ -155,8 +162,8 @@ const Dashboard = () => {
               <p>{post.content}</p>
               <small>By {post.author || "Unknown"}</small>
               <div>
-                <strong>{post.likes?.length || 0} Likes</strong>
-                <strong>{post.comments?.length || 0} Comments</strong>
+                <strong>{post.likes?.length ?? 0} Likes</strong>
+                <button key={post.id} onClick={() => handleLike(post.id)} disabled={post.likedByUser}>Like</button>
               </div>
 
               <div>
@@ -166,12 +173,24 @@ const Dashboard = () => {
               </div>
 
               <div>
+                <h4>Comments</h4>
                 {post.comments?.map((comment, cIndex) => (
                   <div key={comment.id || cIndex}>
                     <p>{comment.content}</p>
                     <small>By {comment.author || "Unknown"}</small>
                   </div>
                 ))}
+
+                <form onSubmit={(e) => handleCommentChange(e, post.id)}>
+                  <input
+                  type="text"
+                  value={commentInputs[post.id] || ""}
+                  onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                  placeholder="Write a comment ..."
+                  required
+                  />
+                  <button type="submit">Comment</button>
+                </form>
               </div>
             </div>
           ))

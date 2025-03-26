@@ -41,6 +41,7 @@ router.post("/create", authenticateJWT, async (req, res) => {
 });
 
 router.post("/like/:postId", authenticateJWT, async (req, res) => {
+  console.log("Authenticate user:", req.user);
   const postId = req.params.postId;
   const userId = req.user.userId;
 
