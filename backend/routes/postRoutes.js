@@ -84,6 +84,7 @@ router.post("/like/:postId", authenticateJWT, async (req, res) => {
 });
 
 router.post("/comment/:postId", authenticateJWT, async (req, res) => {
+  
   const { content } = req.body;
   const postId = req.params.postId;
   const userId = req.user.userId;
@@ -106,6 +107,9 @@ router.post("/comment/:postId", authenticateJWT, async (req, res) => {
         post: {connect: {id: postId}},
         author: {connect: {id: userId}},
       },
+      include: {
+        author: {select: {username: true}},
+      }
     });
     res.status(201).json({ message: "Comment added", comment });
   } catch (error) {

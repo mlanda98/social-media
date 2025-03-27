@@ -179,7 +179,7 @@ const Dashboard = () => {
                 {post.comments?.map((comment, cIndex) => (
                   <div key={comment.id || cIndex}>
                     <p>{comment.content}</p>
-                    <small>By {comment.author || "Unknown"}</small>
+                    <small>By {comment.author?.username || "Unknown"}</small>
                   </div>
                 ))}
 
