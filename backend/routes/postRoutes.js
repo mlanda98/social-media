@@ -103,8 +103,8 @@ router.post("/comment/:postId", authenticateJWT, async (req, res) => {
     const comment = await prisma.comment.create({
       data: {
         content,
-        postId,
-        userId,
+        post: {connect: {id: postId}},
+        author: {connect: {id: userId}},
       },
     });
     res.status(201).json({ message: "Comment added", comment });

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useResolvedPath } from "react-router-dom";
+import { data, useNavigate, useResolvedPath } from "react-router-dom";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
@@ -94,7 +94,7 @@ const Dashboard = () => {
     const content = commentInputs[postId];
 
     if (!content) return;
-
+    
     const token = localStorage.getItem("token");
     const response = await fetch(
       `http://localhost:8000/post/comment/${postId}`,
@@ -107,14 +107,16 @@ const Dashboard = () => {
         body: JSON.stringify({ content }),
       }
     );
+    const data = await response.json();
+    console.log("Comment Submit:", data);
+
     if (response.ok) {
-      const newComment = await response.json();
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
             ? {
                 ...post,
-                comments: [...post.comments, newComment.comment],
+                comments: [...post.comments, data.comment],
               }
             : post
         )
